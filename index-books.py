@@ -3,6 +3,7 @@ import os
 import sys
 import argparse
 import pandas as pd
+from collections import defaultdict
 
 """
 Take in top level books directory (and past file to update?)
@@ -20,9 +21,17 @@ def main(args):
     # Get the subdirectories of the top level directory
     TLD = os.path.abspath(arg.directory)
     dirs = [os.path.join(TLD, d) for d in os.listdir(TLD) if os.path.isdir(d)]
+    # Go through each subdirectory to populate sheets
     sheets = {}
     for d in dirs:
-        sheets[os.basename(d)] = None
+        data = defaultdict(list)
+        files = os.listdir(d)
+        for f in files:
+            # Get file type
+            ext = os.path.splitext(f)[1][1:].upper()
+            fields = os.path.splitext(f)[0].split(' -- ')
+            # Parse file names (TO DO)
+        sheets[os.basename(d)] = pd.DataFrame(data)
     # Write output index to file
     with pd.ExcelWriter(outfile) as f:
         for sheet, df in sheets.items():
