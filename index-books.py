@@ -8,7 +8,6 @@ from collections import defaultdict
 """
 Take in top level books directory (and past file to update?)
 Create a sheet for each subdirectory, ignore files in top level dir
-Each sheet has header: Author Title Filetype
 """
 def parse_filename(filename):
     """
@@ -23,10 +22,10 @@ def parse_filename(filename):
     Returns
     -------
     tuple
-        Contains author, series, title, file type
+        Contains author, title, series, file type
     """
     # Get the extension and the sections of the filename
-    name, ext = os.path.splitext(f)
+    name, ext = os.path.splitext(filename)
     ext = ext[1:].upper() # We don't want the .
     fields = name.split(' -- ')
     # Parse the filename
@@ -39,12 +38,13 @@ def parse_filename(filename):
         author, series, title = fields[0], "", fields[1]
     elif len(fields) == 3:
         author, series, title = fields
-    return (author, series, title, ext)
+    return (author, title, series, ext)
 
 def main(args):
     # Get the subdirectories of the top level directory
-    TLD = os.path.abspath(arg.directory)
-    dirs = [os.path.join(TLD, d) for d in os.listdir(TLD) if os.path.isdir(d)]
+    TLD = os.path.abspath(args.directory)
+    contents = [os.path.join(TLD, entry) for entry in os.listdir(TLD)]
+    dirs = [d for d in contents if os.path.isdir(d)]
     # Go through each subdirectory to populate sheets
     sheets = {}
     for d in dirs:
@@ -52,12 +52,33 @@ def main(args):
         files = os.listdir(d)
         for f in files:
             # Parse file names
-            (author, series, title, ext) = parse_filename(f)
-        sheets[os.basename(d)] = pd.DataFrame(data)
+            (author, title, series, ext) = parse_filename(f)
+            # Add to the data dictionary
+            data['Author(s)'].append(author)
+            data['Title'].append(title)
+            if os.path.basename(d) == 'Novels': # I only care about series for novels
+                data['Series'].append(series)
+            data['Type'].append(ext)
+        sheets[os.path.basename(d)] = pd.DataFrame(data)
     # Write output index to file
-    with pd.ExcelWriter(outfile) as f:
+    outfile = os.path.join(TLD, args.output + ".xlsx")
+    with pd.ExcelWriter(outfile, engine='xlsxwriter') as writer:
+        # Set up formatting objects
+        workbook = writer.book
+        left_fmt = workbook.add_format({'align': 'left', 'border': 0})
+        center_fmt = workbook.add_format({'align': 'center', 'border': 0})
+        column_widths = {'Author(s)': 40, 'Title': 90, 'Series': 20, 'Type': 10}
+        column_styles = {'Author(s)': left_fmt , 'Title': left_fmt , 'Series': left_fmt , 'Type': center_fmt}
+        # Write in data
         for sheet, df in sheets.items():
-            df.to_excel(f, sheet_name=sheet, index=False, freeze_panes=(1,0))
+            df.to_excel(writer, sheet_name=sheet, index=False, freeze_panes=(1,0))
+            # Format data nicely
+            (max_row, max_col) = df.shape
+            cols = {col: list(df.columns).index(col) for col in df.columns}
+            worksheet = writer.sheets[sheet]
+            worksheet.autofilter(0, 0, max_row, max_col - 1)
+            for c in df.columns:
+                worksheet.set_column(cols[c], cols[c], column_widths[c], column_styles[c])
     print("Done!")
 
 if __name__ =="__main__":
@@ -65,7 +86,8 @@ if __name__ =="__main__":
             "output will be placed in the provided directory. One sheet will be created "
             "for each subfolder of the top level Books directory. If an existing index "
             "is provided, the contents will be updated with any new additions.")
-    parser = argparse.ArgumentParser(description=desc)
+    epil = ("Note: The --index option is not yet implemented.")
+    parser = argparse.ArgumentParser(description=desc, epilog=epil)
     parser.add_argument('-i', '--index', help="Path to existing index to update.")
     parser.add_argument('-o', '--output', default="Index", help="Name for the output index file. Default: Index")
     parser.add_argument('directory', help="Top level Books directory to index.")
