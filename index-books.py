@@ -54,6 +54,7 @@ def main(args):
             # Parse file names
             (author, title, series, ext) = parse_filename(f)
             # Add to the data dictionary
+            data['Filename'].append(f) # Used as an index to compare entries
             data['Author(s)'].append(author)
             data['Title'].append(title)
             if os.path.basename(d) == 'Novels': # I only care about series for novels
@@ -67,8 +68,20 @@ def main(args):
         workbook = writer.book
         left_fmt = workbook.add_format({'align': 'left', 'border': 0})
         center_fmt = workbook.add_format({'align': 'center', 'border': 0})
-        column_widths = {'Author(s)': 40, 'Title': 90, 'Series': 20, 'Type': 10}
-        column_styles = {'Author(s)': left_fmt , 'Title': left_fmt , 'Series': left_fmt , 'Type': center_fmt}
+        column_widths = {
+                'Filename': 10,
+                'Author(s)': 40,
+                'Title': 90,
+                'Series': 20,
+                'Type': 10
+                }
+        column_styles = {
+                'Filename': left_fmt,
+                'Author(s)': left_fmt ,
+                'Title': left_fmt ,
+                'Series': left_fmt ,
+                'Type': center_fmt
+                }
         # Write in data
         for sheet, df in sheets.items():
             df.to_excel(writer, sheet_name=sheet, index=False, freeze_panes=(1,0))
@@ -78,7 +91,10 @@ def main(args):
             worksheet = writer.sheets[sheet]
             worksheet.autofilter(0, 0, max_row, max_col - 1)
             for c in df.columns:
-                worksheet.set_column(cols[c], cols[c], column_widths[c], column_styles[c])
+                if c == 'Filename':
+                    worksheet.set_column(cols[c], cols[c], column_widths[c], column_styles[c], {'hidden': True})
+                else:
+                    worksheet.set_column(cols[c], cols[c], column_widths[c], column_styles[c])
     print("Done!")
 
 if __name__ =="__main__":
