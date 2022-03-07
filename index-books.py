@@ -78,6 +78,8 @@ def main(args):
         red_bg = workbook.add_format({'bg_color': bg_colors['red']})
         yellow_bg = workbook.add_format({'bg_color': bg_colors['yellow']})
         green_bg = workbook.add_format({'bg_color': bg_colors['green']})
+        blue_bg = workbook.add_format({'bg_color': bg_colors['blue']})
+        purple_bg = workbook.add_format({'bg_color': bg_colors['purple']})
         column_widths = {
                 'Filename': 10,
                 'Author(s)': 40,
@@ -112,7 +114,7 @@ def main(args):
             worksheet.conditional_format(0, cols['Type'], max_row, cols['Type'], {'type': 'cell',
                                                                                   'criteria': '==',
                                                                                   'value': '"EPUB"',
-                                                                                  'format': green_bg})
+                                                                                  'format': blue_bg})
             worksheet.conditional_format(0, cols['Type'], max_row, cols['Type'], {'type': 'cell',
                                                                                   'criteria': '==',
                                                                                   'value': '"MOBI"',
