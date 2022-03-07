@@ -60,7 +60,7 @@ def main(args):
             if os.path.basename(d) == 'Novels': # I only care about series for novels
                 data['Series'].append(series)
             data['Type'].append(ext)
-        sheets[os.path.basename(d)] = pd.DataFrame(data)
+        sheets[os.path.basename(d)] = pd.DataFrame(data).set_index('Filename', drop=False)
     # Write output index to file
     outfile = os.path.join(TLD, args.output + ".xlsx")
     with pd.ExcelWriter(outfile, engine='xlsxwriter') as writer:
@@ -68,6 +68,16 @@ def main(args):
         workbook = writer.book
         left_fmt = workbook.add_format({'align': 'left', 'border': 0})
         center_fmt = workbook.add_format({'align': 'center', 'border': 0})
+        bg_colors = {
+                'red': '#FFD7D7',
+                'yellow': '#FFF5CE',
+                'green': '#DDE8CB',
+                'blue': '#DEE6EF',
+                'purple': '#E0C2CD'
+                }
+        red_bg = workbook.add_format({'bg_color': bg_colors['red']})
+        yellow_bg = workbook.add_format({'bg_color': bg_colors['yellow']})
+        green_bg = workbook.add_format({'bg_color': bg_colors['green']})
         column_widths = {
                 'Filename': 10,
                 'Author(s)': 40,
@@ -95,6 +105,18 @@ def main(args):
                     worksheet.set_column(cols[c], cols[c], column_widths[c], column_styles[c], {'hidden': True})
                 else:
                     worksheet.set_column(cols[c], cols[c], column_widths[c], column_styles[c])
+            worksheet.conditional_format(0, cols['Type'], max_row, cols['Type'], {'type': 'cell',
+                                                                                  'criteria': '==',
+                                                                                  'value': '"PDF"',
+                                                                                  'format': red_bg})
+            worksheet.conditional_format(0, cols['Type'], max_row, cols['Type'], {'type': 'cell',
+                                                                                  'criteria': '==',
+                                                                                  'value': '"EPUB"',
+                                                                                  'format': green_bg})
+            worksheet.conditional_format(0, cols['Type'], max_row, cols['Type'], {'type': 'cell',
+                                                                                  'criteria': '==',
+                                                                                  'value': '"MOBI"',
+                                                                                  'format': yellow_bg})
     print("Done!")
 
 if __name__ =="__main__":
