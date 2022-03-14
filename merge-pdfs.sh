@@ -4,6 +4,7 @@ usage() {
     echo "merge-pdfs.sh [-h] [-d <input-dir>] -o <output> <in-1> <in-2> ... <in-n>"
     echo "  Takes in an output file specified with the -o option and a set of input"
     echo "  PDF files, which will be concatenated in the order they are provided."
+    echo "  The names of the input files must not contain whitespace."
     echo "  The -d option can be used to specify a directory containing input files."
     echo "  If this option is provided, positional arguments will be ignored."
 }
