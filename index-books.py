@@ -40,29 +40,23 @@ def parse_filename(filename):
         author, series, title = fields
     return (author, title, series, ext)
 
-def main(args):
-    # Get the subdirectories of the top level directory
-    TLD = os.path.abspath(args.directory)
-    contents = [os.path.join(TLD, entry) for entry in os.listdir(TLD)]
-    dirs = [d for d in contents if os.path.isdir(d)]
-    # Go through each subdirectory to populate sheets
-    sheets = {}
-    for d in dirs:
-        data = defaultdict(list)
-        files = os.listdir(d)
-        for f in files:
-            # Parse file names
-            (author, title, series, ext) = parse_filename(f)
-            # Add to the data dictionary
-            data['Filename'].append(f) # Used as an index to compare entries
-            data['Author(s)'].append(author)
-            data['Title'].append(title)
-            if os.path.basename(d) == 'Novels': # I only care about series for novels
-                data['Series'].append(series)
-            data['Type'].append(ext)
-        sheets[os.path.basename(d)] = pd.DataFrame(data).set_index('Filename', drop=False)
-    # Write output index to file
-    outfile = os.path.join(TLD, args.output + ".xlsx")
+def write_index(sheets, outfile):
+    """
+    Arguments
+    -----------
+    sheets: dict
+        A dictionary where each key is the name
+        of a sheet in the index, and each value
+        is a DataFrame containing the data for
+        that sheet.
+    outfile: str
+        A string containing the file path
+        where the index will be written.
+
+    Returns
+    -----------
+    None
+    """
     with pd.ExcelWriter(outfile, engine='xlsxwriter') as writer:
         # Set up formatting objects
         workbook = writer.book
@@ -119,6 +113,31 @@ def main(args):
                                                                                   'criteria': '==',
                                                                                   'value': '"MOBI"',
                                                                                   'format': yellow_bg})
+
+def main(args):
+    # Get the subdirectories of the top level directory
+    TLD = os.path.abspath(args.directory)
+    contents = [os.path.join(TLD, entry) for entry in os.listdir(TLD)]
+    dirs = [d for d in contents if os.path.isdir(d)]
+    # Go through each subdirectory to populate sheets
+    sheets = {}
+    for d in dirs:
+        data = defaultdict(list)
+        files = os.listdir(d)
+        for f in files:
+            # Parse file names
+            (author, title, series, ext) = parse_filename(f)
+            # Add to the data dictionary
+            data['Filename'].append(f) # Used as an index to compare entries
+            data['Author(s)'].append(author)
+            data['Title'].append(title)
+            if os.path.basename(d) == 'Novels': # I only care about series for novels
+                data['Series'].append(series)
+            data['Type'].append(ext)
+        sheets[os.path.basename(d)] = pd.DataFrame(data).set_index('Filename', drop=False)
+    # Write output index to file
+    outfile = os.path.join(TLD, args.output + ".xlsx")
+    write_index(sheets, outfile)
     print("Done!")
 
 if __name__ =="__main__":
