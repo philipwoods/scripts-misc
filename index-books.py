@@ -119,6 +119,13 @@ def main(args):
     TLD = os.path.abspath(args.directory)
     contents = [os.path.join(TLD, entry) for entry in os.listdir(TLD)]
     dirs = [d for d in contents if os.path.isdir(d)]
+    # Read existing index, if it exists
+    old_index = None
+    if args.index is not None:
+        old_index = pd.read_excel(args.index, sheet_name=None)
+        # Reindex the DataFrame on unique file names
+        for sheet, df in old_index.items():
+            old_index[sheet] = df.set_index('Filename', drop=False)
     # Go through each subdirectory to populate sheets
     sheets = {}
     for d in dirs:
