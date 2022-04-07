@@ -103,13 +103,22 @@ def write_index(sheets, outfile):
                 'blue_bg': '#DEE6EF',
                 'purple_bg': '#E0C2CD',
                 '2_scale_min': '#FFEF9C',
-                '2_scale_max': '#FF7128'
+                '2_scale_max': '#FF7128',
+                'neutral_txt': '#996600',
+                'neutral_bg': '#FFFFCC',
+                'good_txt': '#006600',
+                'good_bg': '#CCFFCC',
+                'bad_txt': '#CC0000',
+                'bad_bg': '#FFCCCC'
                 }
         red_bg = workbook.add_format({'bg_color': colors['red_bg']})
         yellow_bg = workbook.add_format({'bg_color': colors['yellow_bg']})
         green_bg = workbook.add_format({'bg_color': colors['green_bg']})
         blue_bg = workbook.add_format({'bg_color': colors['blue_bg']})
         purple_bg = workbook.add_format({'bg_color': colors['purple_bg']})
+        good_fmt = workbook.add_format({'bg_color': colors['good_bg'], 'font_color': colors['good_txt']})
+        neutral_fmt = workbook.add_format({'bg_color': colors['neutral_bg'], 'font_color': colors['neutral_txt']})
+        bad_fmt = workbook.add_format({'bg_color': colors['bad_bg'], 'font_color': colors['bad_txt']})
         # These dictionaries contain information for all columns in any sheet.
         # Not all columns must be present in each sheet.
         column_order = {
@@ -166,18 +175,19 @@ def write_index(sheets, outfile):
                 else:
                     worksheet.set_column(cols[c], cols[c], column_widths[c], column_styles[c])
             # Set condional formatting to color code by file type
-            worksheet.conditional_format(0, cols['Type'], max_row, cols['Type'], {'type': 'cell',
-                                                                                  'criteria': '==',
-                                                                                  'value': '"PDF"',
-                                                                                  'format': red_bg})
-            worksheet.conditional_format(0, cols['Type'], max_row, cols['Type'], {'type': 'cell',
-                                                                                  'criteria': '==',
-                                                                                  'value': '"EPUB"',
-                                                                                  'format': blue_bg})
-            worksheet.conditional_format(0, cols['Type'], max_row, cols['Type'], {'type': 'cell',
-                                                                                  'criteria': '==',
-                                                                                  'value': '"MOBI"',
-                                                                                  'format': yellow_bg})
+            if 'Type' in df.columns:
+                worksheet.conditional_format(0, cols['Type'], max_row, cols['Type'], {'type': 'cell',
+                                                                                      'criteria': '==',
+                                                                                      'value': '"PDF"',
+                                                                                      'format': red_bg})
+                worksheet.conditional_format(0, cols['Type'], max_row, cols['Type'], {'type': 'cell',
+                                                                                      'criteria': '==',
+                                                                                      'value': '"EPUB"',
+                                                                                      'format': blue_bg})
+                worksheet.conditional_format(0, cols['Type'], max_row, cols['Type'], {'type': 'cell',
+                                                                                      'criteria': '==',
+                                                                                      'value': '"MOBI"',
+                                                                                      'format': yellow_bg})
             # Set conditional formatting color scales for Importance and Enthusiasm
             if 'Importance' in df.columns:
                 worksheet.conditional_format(0, cols['Importance'], max_row, cols['Importance'], {'type': '2_color_scale',
@@ -200,11 +210,11 @@ def write_index(sheets, outfile):
                 worksheet.conditional_format(0, cols['Read?'], max_row, cols['Read?'], {'type': 'cell',
                                                                                         'criteria': '==',
                                                                                         'value': '"N"',
-                                                                                        'format': yellow_bg})
+                                                                                        'format': neutral_fmt})
                 worksheet.conditional_format(0, cols['Read?'], max_row, cols['Read?'], {'type': 'cell',
                                                                                         'criteria': '==',
                                                                                         'value': '"Y"',
-                                                                                        'format': green_bg})
+                                                                                        'format': good_fmt})
 
 def main(args):
     # Get the subdirectories of the top level directory
