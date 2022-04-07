@@ -96,18 +96,20 @@ def write_index(sheets, outfile):
         workbook = writer.book
         left_fmt = workbook.add_format({'align': 'left', 'border': 0})
         center_fmt = workbook.add_format({'align': 'center', 'border': 0})
-        bg_colors = {
-                'red': '#FFD7D7',
-                'yellow': '#FFF5CE',
-                'green': '#DDE8CB',
-                'blue': '#DEE6EF',
-                'purple': '#E0C2CD'
+        colors = {
+                'red_bg': '#FFD7D7',
+                'yellow_bg': '#FFF5CE',
+                'green_bg': '#DDE8CB',
+                'blue_bg': '#DEE6EF',
+                'purple_bg': '#E0C2CD',
+                '2_scale_min': '#FFEF9C',
+                '2_scale_max': '#FF7128'
                 }
-        red_bg = workbook.add_format({'bg_color': bg_colors['red']})
-        yellow_bg = workbook.add_format({'bg_color': bg_colors['yellow']})
-        green_bg = workbook.add_format({'bg_color': bg_colors['green']})
-        blue_bg = workbook.add_format({'bg_color': bg_colors['blue']})
-        purple_bg = workbook.add_format({'bg_color': bg_colors['purple']})
+        red_bg = workbook.add_format({'bg_color': colors['red_bg']})
+        yellow_bg = workbook.add_format({'bg_color': colors['yellow_bg']})
+        green_bg = workbook.add_format({'bg_color': colors['green_bg']})
+        blue_bg = workbook.add_format({'bg_color': colors['blue_bg']})
+        purple_bg = workbook.add_format({'bg_color': colors['purple_bg']})
         # These dictionaries contain information for all columns in any sheet.
         # Not all columns must be present in each sheet.
         column_order = {
@@ -183,16 +185,16 @@ def write_index(sheets, outfile):
                                                                                                   'max_type': 'num',
                                                                                                   'min_value': 1,
                                                                                                   'max_value': 5,
-                                                                                                  'min_color': '#FFEF9C',
-                                                                                                  'max_color': '#FF7128'})
+                                                                                                  'min_color': colors['2_scale_min'],
+                                                                                                  'max_color': colors['2_scale_max']})
             if 'Enthusiasm' in df.columns:
                 worksheet.conditional_format(0, cols['Enthusiasm'], max_row, cols['Enthusiasm'], {'type': '2_color_scale',
                                                                                                   'min_type': 'num',
                                                                                                   'max_type': 'num',
                                                                                                   'min_value': 1,
                                                                                                   'max_value': 5,
-                                                                                                  'min_color': '#FFEF9C',
-                                                                                                  'max_color': '#FF7128'})
+                                                                                                  'min_color': colors['2_scale_min'],
+                                                                                                  'max_color': colors['2_scale_max']})
             # Set conditional formatting to color code by whether I've read it
             if 'Read?' in df.columns:
                 worksheet.conditional_format(0, cols['Read?'], max_row, cols['Read?'], {'type': 'cell',
