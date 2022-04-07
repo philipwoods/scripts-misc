@@ -279,6 +279,7 @@ def main(args):
     outfile = os.path.join(TLD, args.output + ".xlsx")
     write_index(sheets, outfile)
     print("Done!")
+    print("\tMake sure to check the spreadsheet entries for any sheets or files listed above!")
 
 if __name__ =="__main__":
     desc = ("Indexes the contents of the provided Books directory. The spreadsheet "
