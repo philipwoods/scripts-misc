@@ -5,10 +5,44 @@ import argparse
 import pandas as pd
 from collections import defaultdict
 
-"""
-Take in top level books directory (and past file to update?)
-Create a sheet for each subdirectory, ignore files in top level dir
-"""
+def make_lalign_formatter(df, cols=None):
+    """
+    Construct formatter dict to left-align columns.
+
+    Parameters
+    ----------
+    df : pandas.core.frame.DataFrame
+        The DataFrame to format
+    cols : None or iterable of strings, optional
+        The columns of df to left-align. The default, cols=None, will
+        left-align all the columns of dtype object
+
+    Returns
+    -------
+    dict : Formatter dictionary
+
+    """
+    if cols is None:
+       cols = df.columns[df.dtypes == 'object'] 
+    return {col: f'{{:<{df[col].str.len().max()}s}}'.format for col in cols}
+
+def print_changed_files(df, cols=['Filename']):
+    """
+    Print properly formatted list of changed files.
+
+    Parameters
+    -------------
+    df : pandas.core.frame.Dataframe
+        A dataframe containing index entries for the changed files.
+    cols : list
+        A list containing the string names of the column(s) to print.
+
+    Returns
+    -------------
+    None, prints to stdout
+    """
+    print(df.to_string(columns=cols, index=False, header=False, formatters=make_lalign_formatter(df)))
+
 def parse_filename(filename):
     """
     Arguments
@@ -74,33 +108,62 @@ def write_index(sheets, outfile):
         green_bg = workbook.add_format({'bg_color': bg_colors['green']})
         blue_bg = workbook.add_format({'bg_color': bg_colors['blue']})
         purple_bg = workbook.add_format({'bg_color': bg_colors['purple']})
+        # These dictionaries contain information for all columns in any sheet.
+        # Not all columns must be present in each sheet.
+        column_order = {
+                'Filename': 1,
+                'Type': 2,
+                'Author(s)': 3,
+                'Title': 4,
+                'Series': 5,
+                'Field': 6,
+                'Subfield': 7,
+                'Importance': 8,
+                'Enthusiasm': 9,
+                'Read?': 10
+                }
         column_widths = {
                 'Filename': 10,
-                'Author(s)': 40,
+                'Type': 8,
+                'Author(s)': 30,
                 'Title': 90,
                 'Series': 20,
-                'Type': 10
+                'Field': 20,
+                'Subfield': 20,
+                'Importance': 12,
+                'Enthusiasm': 12,
+                'Read?': 8
                 }
         column_styles = {
                 'Filename': left_fmt,
-                'Author(s)': left_fmt ,
-                'Title': left_fmt ,
-                'Series': left_fmt ,
-                'Type': center_fmt
+                'Type': center_fmt,
+                'Author(s)': left_fmt,
+                'Title': left_fmt,
+                'Series': left_fmt,
+                'Field': left_fmt,
+                'Subfield': left_fmt,
+                'Importance': center_fmt,
+                'Enthusiasm': center_fmt,
+                'Read?': center_fmt
                 }
         # Write in data
         for sheet, df in sheets.items():
+            # Reorder columns properly before output
+            ordered_cols = sorted(df.columns, key=lambda x: column_order[x])
+            df = df[ordered_cols]
             df.to_excel(writer, sheet_name=sheet, index=False, freeze_panes=(1,0))
             # Format data nicely
             (max_row, max_col) = df.shape
             cols = {col: list(df.columns).index(col) for col in df.columns}
             worksheet = writer.sheets[sheet]
             worksheet.autofilter(0, 0, max_row, max_col - 1)
+            # Apply column widths and other styles
             for c in df.columns:
                 if c == 'Filename':
                     worksheet.set_column(cols[c], cols[c], column_widths[c], column_styles[c], {'hidden': True})
                 else:
                     worksheet.set_column(cols[c], cols[c], column_widths[c], column_styles[c])
+            # Set condional formatting to color code by file type
             worksheet.conditional_format(0, cols['Type'], max_row, cols['Type'], {'type': 'cell',
                                                                                   'criteria': '==',
                                                                                   'value': '"PDF"',
@@ -113,19 +176,39 @@ def write_index(sheets, outfile):
                                                                                   'criteria': '==',
                                                                                   'value': '"MOBI"',
                                                                                   'format': yellow_bg})
+            # Set conditional formatting color scales for Importance and Enthusiasm
+            if 'Importance' in df.columns:
+                worksheet.conditional_format(0, cols['Importance'], max_row, cols['Importance'], {'type': '2_color_scale',
+                                                                                                  'min_type': 'num',
+                                                                                                  'max_type': 'num',
+                                                                                                  'min_value': 1,
+                                                                                                  'max_value': 5,
+                                                                                                  'min_color': '#FFEF9C',
+                                                                                                  'max_color': '#FF7128'})
+            if 'Enthusiasm' in df.columns:
+                worksheet.conditional_format(0, cols['Enthusiasm'], max_row, cols['Enthusiasm'], {'type': '2_color_scale',
+                                                                                                  'min_type': 'num',
+                                                                                                  'max_type': 'num',
+                                                                                                  'min_value': 1,
+                                                                                                  'max_value': 5,
+                                                                                                  'min_color': '#FFEF9C',
+                                                                                                  'max_color': '#FF7128'})
+            # Set conditional formatting to color code by whether I've read it
+            if 'Read?' in df.columns:
+                worksheet.conditional_format(0, cols['Read?'], max_row, cols['Read?'], {'type': 'cell',
+                                                                                        'criteria': '==',
+                                                                                        'value': '"N"',
+                                                                                        'format': yellow_bg})
+                worksheet.conditional_format(0, cols['Read?'], max_row, cols['Read?'], {'type': 'cell',
+                                                                                        'criteria': '==',
+                                                                                        'value': '"Y"',
+                                                                                        'format': green_bg})
 
 def main(args):
     # Get the subdirectories of the top level directory
     TLD = os.path.abspath(args.directory)
     contents = [os.path.join(TLD, entry) for entry in os.listdir(TLD)]
     dirs = [d for d in contents if os.path.isdir(d)]
-    # Read existing index, if it exists
-    old_index = None
-    if args.index is not None:
-        old_index = pd.read_excel(args.index, sheet_name=None)
-        # Reindex the DataFrame on unique file names
-        for sheet, df in old_index.items():
-            old_index[sheet] = df.set_index('Filename', drop=False)
     # Go through each subdirectory to populate sheets
     sheets = {}
     for d in dirs:
@@ -136,12 +219,50 @@ def main(args):
             (author, title, series, ext) = parse_filename(f)
             # Add to the data dictionary
             data['Filename'].append(f) # Used as an index to compare entries
+            data['Type'].append(ext)
             data['Author(s)'].append(author)
             data['Title'].append(title)
             if os.path.basename(d) == 'Novels': # I only care about series for novels
                 data['Series'].append(series)
-            data['Type'].append(ext)
         sheets[os.path.basename(d)] = pd.DataFrame(data).set_index('Filename', drop=False)
+    # If an existing index was provided...
+    if args.index is not None:
+        # Read in the old index data
+        old_index = pd.read_excel(args.index, sheet_name=None)
+        # Reindex the DataFrame on unique file names
+        for sheet, df in old_index.items():
+            old_index[sheet] = df.set_index('Filename', drop=False)
+        # Merge old index with new data
+        merged = {}
+        all_sheets = sorted(list(set(sheets.keys()).union(set(old_index.keys()))))
+        for x in all_sheets:
+            print("Merging sheet: {}".format(x))
+            print("-"*40)
+            if x not in sheets:
+                merged[x] = old_index[x]
+                print("Directory '{}' not found. Sheet preserved from old index.".format(x))
+                print("\tFormer contents:")
+                print_changed_files(merged[x], cols=['Filename'])
+            elif x not in old_index:
+                merged[x] = sheets[x]
+                changes = sheets[x]
+                print("New directory '{}' found. Sheet added to index.".format(x))
+                print("\tContents:")
+                print_changed_files(merged[x], cols=['Filename'])
+            else:
+                merged[x] = sheets[x].combine_first(old_index[x])
+                changes = pd.merge(sheets[x], old_index[x], how='outer', left_index=True, right_index=True, indicator=True, validate='one_to_one', suffixes=('_l','_r'))
+                print("Changes to directory '{}'.".format(x))
+                added = changes[changes['_merge'] == "left_only"]
+                removed = changes[changes['_merge'] == "right_only"]
+                if not added.empty:
+                    print("\tFiles added:")
+                    print_changed_files(added, cols=['Filename_l'])
+                if not removed.empty:
+                    print("\tFiles removed:")
+                    print_changed_files(removed, cols=['Filename_r'])
+            print("")
+        sheets = merged
     # Write output index to file
     outfile = os.path.join(TLD, args.output + ".xlsx")
     write_index(sheets, outfile)
