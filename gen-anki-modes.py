@@ -79,7 +79,7 @@ def main(args):
         track = Track()
         for note in notes:
             track + note
-        sheet_base = "mode_{0}_sheet.png".format(mode)
+        sheet_base = "mode_{0}.png".format(mode)
         sheet = os.path.join(out_dir, sheet_base)
         lilypond.to_png(lilypond.from_Track(track), sheet)
         data['Sheet Music'].append('<img src="{}">'.format(sheet_base))
@@ -98,11 +98,11 @@ def main(args):
     ## Final adjustments with bash tools
     # Anki requires fields to be delimited by '; ' not just ';'
     subprocess.run(['sed', '-i', 's/;/; /g', out_file], cwd=out_dir)
-    # LilyPond PNG output is one whole page (835x1181px) with footer text
+    # LilyPond PNG output is one whole page (1654x2339px) with footer text
     # We can crop off the bottom of the page to remove the footer,
     # then use the -trim option to remove extra whitespace.
     print("Cropping sheet music images...\n")
-    subprocess.run("for f in *.png; do mogrify -crop 835x800+0+0 $f; done", shell=True, cwd=out_dir)
+    subprocess.run("for f in *.png; do mogrify -crop 1600x800+0+0 $f; done", shell=True, cwd=out_dir)
     subprocess.run("for f in *.png; do mogrify -trim $f; done", shell=True, cwd=out_dir)
     # Convert the FluidSynth output .wav files to .mp3
     print("Converting audio files to MP3...\n")
