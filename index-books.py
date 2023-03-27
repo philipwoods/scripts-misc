@@ -218,6 +218,10 @@ def write_index(sheets, outfile):
                                                                                         'criteria': '==',
                                                                                         'value': '"Y"',
                                                                                         'format': good_fmt})
+                worksheet.conditional_format(0, cols['Read?'], max_row, cols['Read?'], {'type': 'cell',
+                                                                                        'criteria': '==',
+                                                                                        'value': '"P"',
+                                                                                        'format': bad_fmt})
 
 def main(args):
     # Get the subdirectories of the top level directory
