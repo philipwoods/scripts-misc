@@ -301,7 +301,7 @@ if __name__ =="__main__":
             "output will be placed in the provided directory. One sheet will be created "
             "for each subfolder of the top level Books directory. If an existing index "
             "is provided, the contents will be updated with any new additions.")
-    epil = ("Depends on the openpyxl and xlsxwriter packages."
+    epil = "Depends on the openpyxl and xlsxwriter packages."
     parser = argparse.ArgumentParser(description=desc, epilog=epil)
     parser.add_argument('-i', '--index', help="Path to existing index to update.")
     parser.add_argument('-o', '--output', default="Index", help="Name for the output index file. Default: Index")
