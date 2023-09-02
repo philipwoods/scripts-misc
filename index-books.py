@@ -280,12 +280,12 @@ def main(args):
                     print("\tFiles added:")
                     print_changed_files(added, cols=['Filename_l'])
                 else:
-                    print("No new files found.")
+                    print("\tNo new files found.")
                 if not removed.empty:
                     print("\tFiles removed:")
                     print_changed_files(removed, cols=['Filename_r'])
                 else:
-                    print("No removed files identified.")
+                    print("\tNo removed files identified.")
             print("")
             print("="*40)
             print("")
