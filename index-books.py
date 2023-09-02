@@ -254,6 +254,8 @@ def main(args):
         # Merge old index with new data
         merged = {}
         all_sheets = sorted(list(set(sheets.keys()).union(set(old_index.keys()))))
+        print("="*40)
+        print("")
         for x in all_sheets:
             print("Merging sheet: {}".format(x))
             print("-"*40)
@@ -271,15 +273,21 @@ def main(args):
             else:
                 merged[x] = sheets[x].combine_first(old_index[x])
                 changes = pd.merge(sheets[x], old_index[x], how='outer', left_index=True, right_index=True, indicator=True, validate='one_to_one', suffixes=('_l','_r'))
-                print("Changes to directory '{}'.".format(x))
+                print("Found existing directory '{}'.".format(x))
                 added = changes[changes['_merge'] == "left_only"]
                 removed = changes[changes['_merge'] == "right_only"]
                 if not added.empty:
                     print("\tFiles added:")
                     print_changed_files(added, cols=['Filename_l'])
+                else:
+                    print("No new files found.")
                 if not removed.empty:
                     print("\tFiles removed:")
                     print_changed_files(removed, cols=['Filename_r'])
+                else:
+                    print("No removed files identified.")
+            print("")
+            print("="*40)
             print("")
         sheets = merged
     # Write output index to file
@@ -293,7 +301,8 @@ if __name__ =="__main__":
             "output will be placed in the provided directory. One sheet will be created "
             "for each subfolder of the top level Books directory. If an existing index "
             "is provided, the contents will be updated with any new additions.")
-    parser = argparse.ArgumentParser(description=desc)
+    epil = ("Depends on the openpyxl and xlsxwriter packages."
+    parser = argparse.ArgumentParser(description=desc, epilog=epil)
     parser.add_argument('-i', '--index', help="Path to existing index to update.")
     parser.add_argument('-o', '--output', default="Index", help="Name for the output index file. Default: Index")
     parser.add_argument('directory', help="Top level Books directory to index.")
