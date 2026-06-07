@@ -6,6 +6,14 @@ import argparse
 import pandas as pd
 import subprocess as sp
 
+# Currently only lists conda-installed packages, not pip-installed packages
+# May need two steps:
+# 1. List env paths with conda info --envs --json
+#    The relevant output will be results_obj['envs'], which is a list of conda prefix paths
+# 2. Iterate through envs and do conda list -p <env-path> --json
+#    To get relevant data, [(package['name'], package['version'], package['channel']) for package in results_obj]
+# Then do final compilation and formatting
+
 def main(args):
     results_json = sp.run(['conda', 'search', '--envs', '--json'], capture_output=True, text=True).stdout
     results_obj = json.loads(results_json)
