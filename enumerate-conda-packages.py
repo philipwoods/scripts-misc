@@ -11,16 +11,18 @@ import subprocess as sp
 
 def main(args):
     # Get list of env prefixes
+    print("Gathering list of environments...")
     env_json = sp.run(['conda', 'info', '--envs', '--json'], capture_output=True, text=True).stdout
     env_prefixes = json.loads(env_json)['envs']
     output_records = []
-    for prefix in env_prefixes:
+    for index, prefix in enumerate(env_prefixes, start=1):
         # Get env name from env prefix
         if prefix.count('env') == 0:
             env_name = "base"
         else:
             env_name = os.path.basename(prefix)
         # Get package info
+        print("Enumerating packages in env: {name} ({index} of {total})".format(name=env_name, index=index, total=len(env_prefixes)))
         pkg_json = sp.run(['conda', 'list', '--json', '-p', prefix], capture_output=True, text=True).stdout
         pkgs_obj = json.loads(pkg_json)
         for pkg in pkgs_obj:
@@ -32,6 +34,7 @@ def main(args):
                     }
             output_records.append(record)
     # Create DataFrame for output formatting
+    print("Formatting output file(s)...")
     out = pd.DataFrame.from_records(output_records)
     out.sort_values(by=['package', 'env'], inplace=True)
     out.to_csv(args.output, sep='\t', index=False)
