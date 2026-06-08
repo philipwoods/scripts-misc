@@ -37,12 +37,16 @@ def main(args):
                     }
             output_records.append(record)
     out = pd.DataFrame.from_records(output_records)
+    out.sort_values('package', inplace=True)
     out.to_csv(args.output, sep='\t', index=False)
+    if args.excel:
+        out.to_excel(args.excel, index=False, freeze_panes=(1,0), autofilter=True)
 
 if __name__ == "__main__":
     desc = ("List basic information about all conda environments on the "
             "system and the packages installed in those environments.")
     parser = argparse.ArgumentParser(description=desc)
     parser.add_argument('-o', '--output', default='output.tsv', help="Output file destination. Default: %(default)s")
+    parser.add_argument('--excel', help="Additional optional file output in XLSX format.")
     args = parser.parse_args()
     main(args)
