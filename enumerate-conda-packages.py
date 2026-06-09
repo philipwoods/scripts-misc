@@ -15,6 +15,7 @@ def main(args):
     env_json = sp.run(['conda', 'info', '--envs', '--json'], capture_output=True, text=True).stdout
     env_prefixes = json.loads(env_json)['envs']
     output_records = []
+    error_messages = []
     for index, prefix in enumerate(env_prefixes, start=1):
         # Get env name from env prefix
         if prefix.count('env') == 0:
@@ -25,6 +26,11 @@ def main(args):
         print("Enumerating packages in env: {name} ({index} of {total})".format(name=env_name, index=index, total=len(env_prefixes)))
         pkg_json = sp.run(['conda', 'list', '--json', '-p', prefix], capture_output=True, text=True).stdout
         pkgs_obj = json.loads(pkg_json)
+        # Detect conda errors
+        if isinstance(pkgs_obj, dict) and 'error' in pkgs_obj.keys():
+            error_messages.append(prefix['error'])
+            continue
+        # Create package records for output
         for pkg in pkgs_obj:
             record = {
                     'package': pkg['name'],
@@ -40,6 +46,10 @@ def main(args):
     out.to_csv(args.output, sep='\t', index=False)
     if args.excel:
         out.to_excel(args.excel, index=False, freeze_panes=(1,0), autofilter=True)
+    if error_messages:
+        print("The following exceptions were encountered during execution:")
+        for message in error_messages:
+            print(message)
 
 def main_original(args):
     results_json = sp.run(['conda', 'search', '--envs', '--json'], capture_output=True, text=True).stdout
